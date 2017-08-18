@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-import scrapy
-from tutorial.items import BuildingItem, UrlItem
-from scrapy.http import Request
-from selenium import webdriver
+import re
 import time
 import urllib
-import re
+
+import scrapy
+from scrapy.http import Request
+from selenium import webdriver
+
+from tutorial.items import BuildingItem
 
 
 class O571Spider(scrapy.Spider):
@@ -68,7 +70,7 @@ class O571Spider(scrapy.Spider):
         :return:
         '''
 
-        print "loading main page"
+        print("loading main page")
         self.driver.get(response.url)
 
         while True:
@@ -76,7 +78,7 @@ class O571Spider(scrapy.Spider):
             if len(elements) > 0:
                 for i, element in enumerate(elements):
                     options = element.find_elements_by_tag_name("option")
-                    print "page%d=%d" % (i, len(options))
+                    print("page%d=%d" % (i, len(options)))
 
                     self.region_page_info["page%d" % (i + 1)] = len(options)
 
@@ -115,19 +117,19 @@ class O571Spider(scrapy.Spider):
                     building_url = buildInfo.xpath(".//a/@href").extract()[0]
                     if len(building_url) > 0:
                         if building_url in self.used_buildings:
-                            print "skip used url"
+                            print("skip used url")
                         else:
                             self.used_buildings.add(building_url)
                             # urlItem = UrlItem()
                             # urlItem["url"] = building_url
                             # urlItem["region"] = title_list[i]
                             # yield urlItem
-                            print "current count: %d" % len(self.used_buildings)
+                            print("current count: %d" % len(self.used_buildings))
                             yield Request(url=building_url, callback=self.parse_build, headers=self.headers,
                                           meta={"region": title_list[i]})
                 else:
-                    print "missing building url in "
-                    print buildInfo.extract()
+                    print("missing building url in ")
+                    print(buildInfo.extract())
 
     def parse_build(self, response):
         '''

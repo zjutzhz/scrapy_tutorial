@@ -29,13 +29,13 @@ class TutorialPipeline(object):
     def process_item(self, item, spider):
         # create_valid_csv(item)
         for key, value in item.items():
-            if isinstance(value, unicode):
+            if isinstance(value, str):
                 # print "####################   UNICODE   ##################"
                 item[key] = value.encode("utf-8")
-                print value.encode("utf-8")
+                print(value.encode("utf-8"))
             else:
                 item[key] = value.decode("ascii").encode("utf-8")
-                print value.decode("ascii").encode("utf-8")
+                print(value.decode("ascii").encode("utf-8"))
                 # print "####################   STR   ##################"
                 # pass
 
