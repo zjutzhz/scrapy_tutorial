@@ -69,26 +69,25 @@ class hz58Spider(scrapy.Spider):
         '''
 
         print("loading main page")
-        self.driver.get(response.url)
-        self.query_url_list.append(response.url)
-        while True:
-            elements = self.driver.find_elements_by_xpath("//div[@class='pager']/a/span")
-            if len(elements) > 0:
-                print("page counts: %s" % elements[len(elements) - 2].text)
-                for i in range(2, int(elements[len(elements) - 2].text) + 1):
-                    url = "http://hz.58.com/cheku/pn%d/" % i
-                    self.query_url_list.append(url)
-                    print(url)
-                break
-            else:
-                pass
-            time.sleep(0.5)
-
-        self.driver.close()
-
-        print(self.query_url_list)
-        # yield Request(url=self.start_urls[0], callback=self.parse_main,
-        #               headers=self.headers)
+        # self.driver.get(response.url)
+        # self.query_url_list.append(response.url)
+        # while True:
+        #     elements = self.driver.find_elements_by_xpath("//div[@class='pager']/a/span")
+        #     if len(elements) > 0:
+        #         print("page counts: %s" % elements[len(elements) - 2].text)
+        #         for i in range(2, int(elements[len(elements) - 2].text) + 1):
+        #             url = "http://hz.58.com/cheku/pn%d/" % i
+        #             self.query_url_list.append(url)
+        #         break
+        #     else:
+        #         pass
+        #     time.sleep(0.5)
+        #
+        # self.driver.close()
+        #
+        # print(self.query_url_list)
+        yield Request(url=self.start_urls[0], callback=self.parse_main,
+                      headers=self.headers)
         # self.generateQueryString()
         # for query_string in self.query_string_list:
         #     yield Request(url=self.start_urls[0] + "?" + urllib.urlencode(query_string), callback=self.parse_main,
@@ -102,31 +101,19 @@ class hz58Spider(scrapy.Spider):
         '''
 
         time.sleep(10)
-        title_list = [table_region.extract() for table_region in
-                      response.xpath("//span[@class='title_des']/text()")]
-
-        table_list = [table for table in response.xpath("//ul[@class='house-list-wrap']")]
-
-        for i in range(0, len(table_list)):
-
-            for buildInfo in table_list[i].xpath(".//div[@class='pic']"):
-                if len(buildInfo.xpath(".//a/@href").extract()) > 0:
-                    building_url = buildInfo.xpath(".//a/@href").extract()[0]
-                    if len(building_url) > 0:
-                        if building_url in self.used_buildings:
-                            print("skip used url")
-                        else:
-                            self.used_buildings.add(building_url)
-                            # urlItem = UrlItem()
-                            # urlItem["url"] = building_url
-                            # urlItem["region"] = title_list[i]
-                            # yield urlItem
-                            print("current count: %d" % len(self.used_buildings))
-                            yield Request(url=building_url, callback=self.parse_build, headers=self.headers,
-                                          meta={"title": title_list[i]})
-                else:
-                    print("missing building url in ")
-                    print(buildInfo.extract())
+        lilists = response.xpath("//ul[@class='house-list-wrap']/li")
+        for li in lilists:
+            title = li.xpath(".//h2/a/span/text()").extract()[0]
+            description = li.xpath(".//p/span/text()").extract()
+            area = description[0].strip()
+            address = li.xpath(".//p/span/span/text()").extract()[0]
+            size = description[2]
+            date_time = li.xpath(".//div[@class = 'time']/text()").extract()[0]
+            price_day = li.xpath(".//p[@class = 'sum']/b/text()").extract()[0]
+            price_day_unit = description[3]
+            price_month = description[4]
+            print("%s, %s, %s, %s, %s, %s, %s, %s " % (
+            title, area, address, size, date_time, price_day, price_day_unit, price_month))
 
     def parse_build(self, response):
         '''
