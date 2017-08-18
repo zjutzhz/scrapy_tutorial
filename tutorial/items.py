@@ -7,7 +7,6 @@
 
 import scrapy
 
-
 class TutorialItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
@@ -28,4 +27,15 @@ class BuildingItem(scrapy.Item):
 
 class UrlItem(scrapy.Item):
     region = scrapy.Field()
+    url = scrapy.Field()
+
+class BuildingItem(scrapy.Item):
+    # define the fields for your item here like:
+    # name = scrapy.Field()
+    title = scrapy.Field()
+    region = scrapy.Field()
+    address = scrapy.Field()
+    character = scrapy.Field()
+    size = scrapy.Field()
+    fee = scrapy.Field()
     url = scrapy.Field()
