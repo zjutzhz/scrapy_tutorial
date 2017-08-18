@@ -20,7 +20,7 @@ class hz58Spider(scrapy.Spider):
     def __init__(self):
         self.driver = webdriver.Chrome()
         # 翻页请求
-        self.query_string_list = []
+        self.query_url_list = []
 
         self.region_page_info = {}
         # 已经爬取的写字楼
@@ -68,23 +68,27 @@ class hz58Spider(scrapy.Spider):
         :return:
         '''
 
-        print( "loading main page")
+        print("loading main page")
         self.driver.get(response.url)
-
+        self.query_url_list.append(response.url)
         while True:
-            elements = self.driver.find_elements_by_xpath("//div[@class='pager']/a")
+            elements = self.driver.find_elements_by_xpath("//div[@class='pager']/a/span")
             if len(elements) > 0:
-                for i in elements:
-                    print( "page%d=%d" % (i,len(elements)-2))
-                    self.region_page_info["page%d" % (i + 1)] = len(options)-2
+                print("page counts: %s" % elements[len(elements) - 2].text)
+                for i in range(2, int(elements[len(elements) - 2].text) + 1):
+                    url = "http://hz.58.com/cheku/pn%d/" % i
+                    self.query_url_list.append(url)
+                    print(url)
                 break
             else:
                 pass
             time.sleep(0.5)
 
         self.driver.close()
-        yield Request(url=self.start_urls[0], callback=self.parse_main,
-                      headers=self.headers)
+
+        print(self.query_url_list)
+        # yield Request(url=self.start_urls[0], callback=self.parse_main,
+        #               headers=self.headers)
         # self.generateQueryString()
         # for query_string in self.query_string_list:
         #     yield Request(url=self.start_urls[0] + "?" + urllib.urlencode(query_string), callback=self.parse_main,
@@ -117,7 +121,7 @@ class hz58Spider(scrapy.Spider):
                             # urlItem["url"] = building_url
                             # urlItem["region"] = title_list[i]
                             # yield urlItem
-                            print ("current count: %d" % len(self.used_buildings))
+                            print("current count: %d" % len(self.used_buildings))
                             yield Request(url=building_url, callback=self.parse_build, headers=self.headers,
                                           meta={"title": title_list[i]})
                 else:
