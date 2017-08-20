@@ -17,9 +17,9 @@ def create_valid_csv(self, item):
 class TutorialPipeline(object):
     def __init__(self):
         date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.file = open("output_%s_.csv" % date_str, 'w')
+        self.file = open("output_%s_.csv" % date_str, 'wb')
         # self.file = codecs.open("output_%s_.csv" % date_str, 'w', "utf-8")
-        self.exporter = CsvItemExporter(self.file, encoding="utf-8")
+        self.exporter = CsvItemExporter(self.file, encoding="gb18030")
         self.exporter.start_exporting()
 
     def close_spider(self, spider):
@@ -31,8 +31,8 @@ class TutorialPipeline(object):
         for key, value in item.items():
             if isinstance(value, str):
                 # print "####################   UNICODE   ##################"
-                item[key] = value.encode("utf-8")
-                print(value.encode("utf-8"))
+                item[key] = value.strip()
+                print(u"Preparing: %s" % item[key])
             else:
                 item[key] = value.decode("ascii").encode("utf-8")
                 print(value.decode("ascii").encode("utf-8"))
