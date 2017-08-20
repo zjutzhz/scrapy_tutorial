@@ -29,13 +29,16 @@ class UrlItem(scrapy.Item):
     region = scrapy.Field()
     url = scrapy.Field()
 
-class BuildingItem(scrapy.Item):
+class GarageItem(scrapy.Item):
     # define the fields for your item here like:
     # name = scrapy.Field()
+    # title, area, address, size, date_time, price_day, price_day_unit, price_month, price_month_unit
     title = scrapy.Field()
-    region = scrapy.Field()
+    area = scrapy.Field()
     address = scrapy.Field()
-    character = scrapy.Field()
     size = scrapy.Field()
-    fee = scrapy.Field()
-    url = scrapy.Field()
+    date_time = scrapy.Field()
+    price_day = scrapy.Field()
+    price_day_unit = scrapy.Field()
+    price_month = scrapy.Field()
+    price_month_unit = scrapy.Field()
