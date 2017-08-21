@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import re
 import time
-import urllib
+import urllib.parse
 
 import scrapy
 from scrapy.http import Request
@@ -10,7 +10,7 @@ from selenium import webdriver
 from tutorial.items import BuildingItem
 
 
-class O571Spider(scrapy.Spider):
+class o571Spider(scrapy.Spider):
     name = "o571"
     allowed_domain = ["o571.com"]
     start_urls = [
@@ -29,39 +29,6 @@ class O571Spider(scrapy.Spider):
         self.used_buildings = set()
         # 取出标签里值
         self.xml_tag_regax_exp = re.compile(r"<.*?>")
-
-    # def parse(self, response):
-    #     self.driver.get("http://www.o571.com/office/571/571_14119.html")
-    #     while True:
-    #         elements = self.driver.find_elements_by_xpath("//div[@class='bis_actinfo clearfix']/ul/li")
-    #         if len(elements) > 0:
-    #             address = self.xml_tag_regax_exp.sub("", elements[7].text)
-    #             # 城区商圈
-    #             business = self.xml_tag_regax_exp.sub("", elements[5].text)
-    #             # 行业特点
-    #             character = self.xml_tag_regax_exp.sub("", elements[13].text)
-    #             # 物业名称
-    #             name = self.xml_tag_regax_exp.sub("", elements[1].text)
-    #             # 物业描述
-    #             desc = self.xml_tag_regax_exp.sub("",
-    #                                               self.driver.find_element_by_xpath(
-    #                                                   "//div[@class='tab_detail_item']/p").text)
-    #
-    #             item = BuildingItem()
-    #             item["region"] = response.meta["region"]
-    #             item["name"] = name
-    #             item["business"] = business
-    #             item["character"] = character
-    #             item["address"] = address
-    #             item["desc"] = desc
-    #             item["url"] = response.url
-    #
-    #             yield item
-    #             break
-    #         else:
-    #             pass
-    #     self.driver.close()
-
 
     def parse(self, response):
         '''
@@ -94,7 +61,8 @@ class O571Spider(scrapy.Spider):
                       headers=self.headers)
         self.generateQueryString()
         for query_string in self.query_string_list:
-            yield Request(url=self.start_urls[0] + "?" + urllib.urlencode(query_string), callback=self.parse_main,
+            print(self.start_urls[0] + "?" + urllib.parse.urlencode(query_string))
+            yield Request(url=self.start_urls[0] + "?" + urllib.parse.urlencode(query_string), callback=self.parse_main,
                           headers=self.headers)
 
     def parse_main(self, response):
@@ -104,7 +72,7 @@ class O571Spider(scrapy.Spider):
         :return:
         '''
 
-        time.sleep(10)
+        time.sleep(1)
         title_list = [table_region.extract() for table_region in
                       response.xpath("//td[@class='show_info']/span/font/text()")]
 
@@ -137,65 +105,176 @@ class O571Spider(scrapy.Spider):
         :param response:
         :return:
         '''
+        time.sleep(1)
+        try:
+            base_lists = response.xpath("//div[@class='bis_actinfo clearfix']/ul/li").extract()
 
-        table_base_info = response.xpath("//div[@class='bis_actinfo clearfix']/ul/li").extract()
+            if len(base_lists) > 0:
+                # 物业地址
+                address = self.xml_tag_regax_exp.sub("", base_lists[7])
+                # 城区商圈
+                business = self.xml_tag_regax_exp.sub("", base_lists[5])
+                # 行业特点
+                character = self.xml_tag_regax_exp.sub("", base_lists[13])
+                # 物业名称
+                name = response.xpath("//div[@id='content']/h2/text()").extract()[0]
+                # 物业描述
+                desc = self.xml_tag_regax_exp.sub("", response.xpath("//div[@class='tab_detail_item']/p").extract()[0])
 
-        if len(table_base_info) > 0:
-            time.sleep(10)
-            # 物业地址
-            address = self.xml_tag_regax_exp.sub("", table_base_info[7])
-            # 城区商圈
-            business = self.xml_tag_regax_exp.sub("", table_base_info[5])
-            # 行业特点
-            character = self.xml_tag_regax_exp.sub("", table_base_info[13])
-            # 物业名称
-            name = response.xpath("//div[@id='content']/h2/text()").extract()[0]
-            # 物业描述
-            desc = self.xml_tag_regax_exp.sub("", response.xpath("//div[@class='tab_detail_item']/p").extract()[0])
+                supporting_lists = response.xpath("//div[@class='box1 pb3 clearfix']/ul/li").extract()
 
-            item = BuildingItem()
-            item["region"] = response.meta["region"]
-            item["name"] = name
-            item["business"] = business
-            item["character"] = character
-            item["address"] = address
-            item["desc"] = desc
-            item["url"] = response.url
-
-            yield item
-        else:
-            self.driver = webdriver.Chrome()
-            self.driver.get(response.url)
-
-            while True:
-                elements = self.driver.find_elements_by_xpath("//div[@class='bis_actinfo clearfix']/ul/li")
-                if len(elements) > 0:
-                    address = self.xml_tag_regax_exp.sub("", elements[7].text)
-                    # 城区商圈
-                    business = self.xml_tag_regax_exp.sub("", elements[5].text)
-                    # 行业特点
-                    character = self.xml_tag_regax_exp.sub("", elements[13].text)
-                    # 物业名称
-                    name = self.xml_tag_regax_exp.sub("", elements[1].text)
-                    # 物业描述
-                    desc = self.xml_tag_regax_exp.sub("",
-                                                      self.driver.find_element_by_xpath(
-                                                          "//div[@class='tab_detail_item']/p").text)
-
-                    item = BuildingItem()
-                    item["region"] = response.meta["region"]
-                    item["name"] = name
-                    item["business"] = business
-                    item["character"] = character
-                    item["address"] = address
-                    item["desc"] = desc
-                    item["url"] = response.url
-
-                    yield item
-                    break
+                if len(supporting_lists) > 0:
+                    # 物管公司
+                    company = self.xml_tag_regax_exp.sub("", supporting_lists[1])
+                    # 楼层状况
+                    floor = self.xml_tag_regax_exp.sub("", supporting_lists[3])
+                    # 总建筑面积
+                    size = self.xml_tag_regax_exp.sub("", supporting_lists[5])
+                    # 物管费
+                    fee = self.xml_tag_regax_exp.sub("", supporting_lists[7])
+                    # 标准层高
+                    height = self.xml_tag_regax_exp.sub("", supporting_lists[9])
+                    # 车位数量
+                    garage = self.xml_tag_regax_exp.sub("", supporting_lists[13])
+                    # 标准层面积
+                    size_per_floor = self.xml_tag_regax_exp.sub("", supporting_lists[15])
+                    # 车位费
+                    fee_per_garage = self.xml_tag_regax_exp.sub("", supporting_lists[19])
+                    # 交通站点
+                    traffic_centre = self.xml_tag_regax_exp.sub("", supporting_lists[25])
+                    # 轨道公交
+                    traffic = self.xml_tag_regax_exp.sub("", supporting_lists[27])
                 else:
-                    pass
-            self.driver.close()
+                    company = "N/A"
+                    # 楼层状况
+                    floor = "N/A"
+                    # 总建筑面积
+                    size = "N/A"
+                    # 物管费
+                    fee = "N/A"
+                    # 标准层高
+                    height = "N/A"
+                    # 车位数量
+                    garage = "N/A"
+                    # 标准层面积
+                    size_per_floor = "N/A"
+                    # 车位费
+                    fee_per_garage = "N/A"
+                    # 交通站点
+                    traffic_centre = "N/A"
+                    # 轨道公交
+                    traffic = "N/A"
+
+                item = BuildingItem()
+                item["region"] = response.meta["region"]
+                item["name"] = name
+                item["business"] = business
+                item["character"] = character
+                item["address"] = address
+                item["company"] = company
+                item["floor"] = floor
+                item["size"] = size
+                item["fee"] = fee
+                item["height"] = height
+                item["garage"] = garage
+                item["size_per_floor"] = size_per_floor
+                item["fee_per_garage"] = fee_per_garage
+                item["traffic_centre"] = traffic_centre
+                item["traffic"] = traffic
+                item["desc"] = desc
+                item["url"] = response.url
+
+                yield item
+            else:
+                self.driver = webdriver.Chrome()
+                self.driver.get(response.url)
+
+                while True:
+                    base_elements = self.driver.find_elements_by_xpath("//div[@class='bis_actinfo clearfix']/ul/li")
+                    if len(base_elements) > 0:
+                        # 物业地址
+                        address = self.xml_tag_regax_exp.sub("", base_elements[7].text)
+                        # 城区商圈
+                        business = self.xml_tag_regax_exp.sub("", base_elements[5].text)
+                        # 行业特点
+                        character = self.xml_tag_regax_exp.sub("", base_elements[13].text)
+                        # 物业名称
+                        name = self.xml_tag_regax_exp.sub("", base_elements[1].text)
+                        # 物业描述
+                        desc = self.xml_tag_regax_exp.sub("",
+                                                          self.driver.find_element_by_xpath(
+                                                              "//div[@class='tab_detail_item']/p").text)
+
+                        supporting_elements = self.driver.find_elements_by_xpath(
+                            "//div[@class='box1 pb3 clearfix']/ul/li")
+                        if len(supporting_elements) > 0:
+                            # 物管公司
+                            company = self.xml_tag_regax_exp.sub("", supporting_elements[1].text)
+                            # 楼层状况
+                            floor = self.xml_tag_regax_exp.sub("", supporting_elements[3].text)
+                            # 总建筑面积
+                            size = self.xml_tag_regax_exp.sub("", supporting_elements[5].text)
+                            # 物管费
+                            fee = self.xml_tag_regax_exp.sub("", supporting_elements[7].text)
+                            # 标准层高
+                            height = self.xml_tag_regax_exp.sub("", supporting_elements[9].text)
+                            # 车位数量
+                            garage = self.xml_tag_regax_exp.sub("", supporting_elements[13].text)
+                            # 标准层面积
+                            size_per_floor = self.xml_tag_regax_exp.sub("", supporting_elements[15].text)
+                            # 车位费
+                            fee_per_garage = self.xml_tag_regax_exp.sub("", supporting_elements[19].text)
+                            # 交通站点
+                            traffic_centre = self.xml_tag_regax_exp.sub("", supporting_elements[25].text)
+                            # 轨道公交
+                            traffic = self.xml_tag_regax_exp.sub("", supporting_elements[27].text)
+                        else:
+                            company = "N/A"
+                            # 楼层状况
+                            floor = "N/A"
+                            # 总建筑面积
+                            size = "N/A"
+                            # 物管费
+                            fee = "N/A"
+                            # 标准层高
+                            height = "N/A"
+                            # 车位数量
+                            garage = "N/A"
+                            # 标准层面积
+                            size_per_floor = "N/A"
+                            # 车位费
+                            fee_per_garage = "N/A"
+                            # 交通站点
+                            traffic_centre = "N/A"
+                            # 轨道公交
+                            traffic = "N/A"
+
+                        item = BuildingItem()
+                        item["region"] = response.meta["region"]
+                        item["name"] = name
+                        item["business"] = business
+                        item["character"] = character
+                        item["address"] = address
+                        item["company"] = company
+                        item["floor"] = floor
+                        item["size"] = size
+                        item["fee"] = fee
+                        item["height"] = height
+                        item["garage"] = garage
+                        item["size_per_floor"] = size_per_floor
+                        item["fee_per_garage"] = fee_per_garage
+                        item["traffic_centre"] = traffic_centre
+                        item["traffic"] = traffic
+                        item["desc"] = desc
+                        item["url"] = response.url
+
+                        yield item
+                        break
+                    else:
+                        pass
+                self.driver.close()
+        except Exception as e:
+            print("Error while parsing url %s " % response.url)
 
     def generateQueryString(self):
 
